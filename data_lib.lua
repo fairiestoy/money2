@@ -8,24 +8,18 @@ This way, we reduce the amount of money files.
 
 local user_table = {}
 
+local sep = money.sep
+
 function money.get( name )
-	if #user_table == 0 then
-		freeminer.log( 'error', 'money] Could not access user_table' )
-		return nil
-	end
 	if user_table[name] then
 		return user_table[name]
 	end
-	return false
+	return nil
 end
 
 function money.set( name, value )
-	if #user_table == 0 then
-		freeminer.log( 'error', 'money] Could not access user_table [2]' )
-		return nil
-	end
 	user_table[name] = value
-	save_file = io.open( freeminer.get_worldpath()..package.config:sub(1,1)..'money', 'w' )
+	save_file = io.open( freeminer.get_worldpath()..sep..'money', 'w' )
 	if not save_file then
 		freeminer.log( 'error' , 'money] Could not open money file' )
 		return nil
@@ -36,9 +30,9 @@ function money.set( name, value )
 end
 
 function money.init_utable( )
-	money_file = io.open( freeminer.get_worldpath()..package.config:sub(1,1)..'money', 'r' )
+	money_file = io.open( freeminer.get_worldpath()..sep..'money', 'r' )
 	if not money_file then
-		freeminer.log( 'error', 'money] Could not open money file' )
+		user_table = {}
 		return nil
 	end
 	data = money_file:read( '*all' )

@@ -19,6 +19,10 @@
 --Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ---
 
+if not freeminer then
+	freeminer = minetest
+end
+
 money = {}
 money.version = 2.01
 
@@ -29,6 +33,8 @@ local sep = money.sep
 dofile(freeminer.get_modpath("money2") .. sep .. "config.lua")
 dofile(freeminer.get_modpath("money2") .. sep .. "lockedsign.lua")
 dofile(freeminer.get_modpath("money2") .. sep .. "data_lib.lua")
+
+money.init_utable( )
 
 money.has_credit = function(name)
 	local privs = freeminer.get_player_privs(name)
@@ -99,6 +105,7 @@ freeminer.register_on_joinplayer(function(player)
 	name = player:get_player_name()
 	if not money.get(name) then
 		money.set(name, tostring(money.initial_amount))
+		freeminer.log( 'error', 'Player started with initial amount' )
 	end
 end)
 
