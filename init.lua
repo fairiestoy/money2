@@ -1,7 +1,8 @@
 ---
---money 2.00
+--money 2.01
 --Copyright (C) 2012 Bad_Command
 --Copyright (C) 2012 kotolegokot
+--Partially changed 2013 fairiestoy
 --
 --This library is free software; you can redistribute it and/or
 --modify it under the terms of the GNU Lesser General Public
@@ -19,29 +20,18 @@
 ---
 
 money = {}
-money.version = 2.00
+money.version = 2.01
 
-dofile(minetest.get_modpath("money2") .. "/config.lua")
-dofile(minetest.get_modpath("money2") .. "/lockedsign.lua")
+money.sep = package.config:sub(1,1)
 
-money.set = function(name, value)
-	local output = io.open(minetest.get_worldpath() .. "/money_" .. name .. ".txt", "w")
-	output:write(value)
-	io.close(output)
-end
+local sep = money.sep
 
-money.get = function(name)
-	local input = io.open(minetest.get_worldpath() .. "/money_" .. name .. ".txt", "r")
-	if not input then 
-		return nil
-	end
-	credit = input:read("*n")
-	io.close(input)
-	return credit
-end
+dofile(freeminer.get_modpath("money2") .. sep .. "config.lua")
+dofile(freeminer.get_modpath("money2") .. sep .. "lockedsign.lua")
+dofile(freeminer.get_modpath("money2") .. sep .. "data_lib.lua")
 
 money.has_credit = function(name)
-	local privs = minetest.get_player_privs(name)
+	local privs = freeminer.get_player_privs(name)
 	if ( privs == nil or not privs["money"] ) then
 		return false
 	end
@@ -59,14 +49,14 @@ money.add = function(name, amount)
 	end
 
 	money.set(name, credit + amount)
-	return nil 
+	return nil
 end
 
-money.dec = function(name, amount) 
+money.dec = function(name, amount)
 	if ( amount < 0 ) then
 		return "must specify positive amount"
 	end
-	
+
 	local credit = money.get(name)
 	if ( credit == nil ) then
 		return name .. " does not have a credit account."
@@ -105,81 +95,81 @@ money.transfer = function(from, to, amount)
 	return nil
 end
 
-minetest.register_on_joinplayer(function(player)
+freeminer.register_on_joinplayer(function(player)
 	name = player:get_player_name()
 	if not money.get(name) then
 		money.set(name, tostring(money.initial_amount))
 	end
 end)
 
-minetest.register_privilege("money", "Can use /money [pay <player> <amount>] command")
-minetest.register_privilege("money_admin", {
+freeminer.register_privilege("money", "Can use /money [pay <player> <amount>] command")
+freeminer.register_privilege("money_admin", {
 	description = "Can use /money [<player> | pay/set/add/dec <player> <amount>] command",
 	give_to_singleplayer = false,
 })
 
-minetest.register_chatcommand("money", {
+freeminer.register_chatcommand("money", {
 	privs = {money=true},
 	params = "[<player> | pay/set/add/dec <player> <amount>]",
 	description = "Operations with credit",
 	func = function(name,  param)
 		if param == "" then
-			minetest.chat_send_player(name, money.get(name) .. money.currency_name)
+			freeminer.chat_send_player(name, money.get(name) .. money.currency_name)
 		else
 			local param1, reciever, amount = string.match(param, "([^ ]+) ([^ ]+) (.+)")
 			if not reciever and not amount then
-				if minetest.get_player_privs(name)["money_admin"] then
+				if freeminer.get_player_privs(name)["money_admin"] then
 					if not money.get(param) then
-						minetest.chat_send_player(name, "money: Player named \"" .. param .. "\" does not exist or does not have an account.")
+						freeminer.chat_send_player(name, "money: Player named \"" .. param .. "\" does not exist or does not have an account.")
 						return true
 					end
-					minetest.chat_send_player(name, money.get(param) .. money.currency_name)
+					freeminer.chat_send_player(name, money.get(param) .. money.currency_name)
 					return true
 				else
-					minetest.chat_send_player(name, "money: You don't have permission to run this command (missing privileges: money_admin)")
+					freeminer.chat_send_player(name, "money: You don't have permission to run this command (missing privileges: money_admin)")
 				end
 			end
 			if (param1 ~= "pay") and (param1 ~= "set") and (param1 ~= "add") and (param1 ~= "dec") or not reciever or not amount then
-				minetest.chat_send_player(name, "money: Invalid parameters (see /help money)")
+				freeminer.chat_send_player(name, "money: Invalid parameters (see /help money)")
 				return true
 			elseif not money.get(reciever) then
-				minetest.chat_send_player(name, "money: Player named \"" .. reciever .. "\" does not exist or does not have account.")
+				freeminer.chat_send_player(name, "money: Player named \"" .. reciever .. "\" does not exist or does not have account.")
 				return true
 			elseif not tonumber(amount) then
-				minetest.chat_send_player(name, "money: amount .. " .. "is not a number.")
+				freeminer.chat_send_player(name, "money: amount .. " .. "is not a number.")
 				return true
 			elseif tonumber(amount) < 0 then
-				minetest.chat_send_player(name, "money: The amount must be greater than 0.")
+				freeminer.chat_send_player(name, "money: The amount must be greater than 0.")
 				return true
 			end
 			amount = tonumber(amount)
 			if param1 == "pay" then
 				local err = money.transfer(name ,reciever, amount)
-				if ( err ~= nil ) then 
-					minetest.chat_send_player(name, "money: Error: "..err..".")						
+				if ( err ~= nil ) then
+					freeminer.chat_send_player(name, "money: Error: "..err..".")
 				else
-					minetest.chat_send_player(name, "money: You paid " .. reciever .. " " .. amount .. money.currency_name)
-					minetest.chat_send_player(reciever, "money: " .. name .. " paid you " .. amount .. money.currency_name)
+					freeminer.chat_send_player(name, "money: You paid " .. reciever .. " " .. amount .. money.currency_name)
+					freeminer.chat_send_player(reciever, "money: " .. name .. " paid you " .. amount .. money.currency_name)
 				end
-			elseif minetest.get_player_privs(name)["money_admin"] then
+			elseif freeminer.get_player_privs(name)["money_admin"] then
 				if param1 == "add" then
 					local err = money.add(reciever, amount)
-					if ( err ~= nil ) then 
-						minetest.chat_send_player(name, "money: Error"..err..".")		
+					if ( err ~= nil ) then
+						freeminer.chat_send_player(name, "money: Error"..err..".")
 					end
 				elseif param1 == "dec" then
 					local err = money.dec(reciever, amount)
-					if ( err ~= nil ) then 
-						minetest.chat_send_player(name, "money: Error"..err..".")
+					if ( err ~= nil ) then
+						freeminer.chat_send_player(name, "money: Error"..err..".")
 					end
 				elseif param1 == "set" then
 					local err = money.set(reciever, amount)
-					if ( err ~= nil ) then 
-						minetest.chat_send_player(name, "money: Error"..err..".")
-					end					
+					if ( err ~= nil ) then
+						freeminer.chat_send_player(name, "money: Error"..err..".")
+					end
 				end
 			else
-				minetest.chat_send_player(name, "money: You don't have permission to run this command (missing privileges: money_admin)")
+				freeminer.chat_send_player(name, "money: You don't have permission to run this command (missing privileges: money_admin)")
 			end
 		end
 	end,

@@ -1,5 +1,5 @@
 ---
---money 2.00
+--money 2.01
 --Copyright (C) 2012 Bad_Command
 --
 --This library is free software; you can redistribute it and/or
