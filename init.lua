@@ -105,7 +105,6 @@ freeminer.register_on_joinplayer(function(player)
 	name = player:get_player_name()
 	if not money.get(name) then
 		money.set(name, tostring(money.initial_amount))
-		freeminer.log( 'error', 'Player started with initial amount' )
 	end
 end)
 
